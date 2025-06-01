@@ -78,15 +78,6 @@ resource "aws_ecs_task_definition" "app" {
   })
 }
 
-# CloudWatch Log Group
-resource "aws_cloudwatch_log_group" "app" {
-  name              = "/ecs/${var.project_name}-${var.environment}"
-  retention_in_days = 30
-
-  tags = merge(var.common_tags, {
-    Name = "${var.project_name}-${var.environment}-logs"
-  })
-}
 
 # ECS Service
 resource "aws_ecs_service" "app" {
@@ -99,7 +90,7 @@ resource "aws_ecs_service" "app" {
   network_configuration {
     subnets          = data.aws_subnet_ids.default.ids
     security_groups  = [aws_security_group.ecs_tasks.id]
-    assign_public_ip = false
+    assign_public_ip = true
   }
 
   load_balancer {
