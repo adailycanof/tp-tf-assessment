@@ -1,13 +1,12 @@
-
 # Security Groups
 resource "aws_security_group" "alb" {
-  name        = "${var.project_name}-alb-sg"
+  name        = "${var.project_name}-${var.environment}-alb-sg"
   description = "Security group for ALB"
   vpc_id      = data.aws_vpc.default_vpc.id
 
   ingress {
-    from_port   = 80
-    to_port     = 80
+    from_port   = var.alb_port
+    to_port     = var.alb_port
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -19,19 +18,19 @@ resource "aws_security_group" "alb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = {
-    Name = "${var.project_name}-alb-sg"
-  }
+  tags = merge(var.common_tags, {
+    Name = "${var.project_name}-${var.environment}-alb-sg"
+  })
 }
 
 resource "aws_security_group" "ecs_tasks" {
-  name        = "${var.project_name}-ecs-tasks-sg"
+  name        = "${var.project_name}-${var.environment}-ecs-tasks-sg"
   description = "Security group for ECS tasks"
   vpc_id      = data.aws_vpc.default_vpc.id
 
   ingress {
-    from_port       = 5000
-    to_port         = 5000
+    from_port       = var.container_port
+    to_port         = var.container_port
     protocol        = "tcp"
     security_groups = [aws_security_group.alb.id]
   }
@@ -43,7 +42,7 @@ resource "aws_security_group" "ecs_tasks" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = {
-    Name = "${var.project_name}-ecs-tasks-sg"
-  }
+  tags = merge(var.common_tags, {
+    Name = "${var.project_name}-${var.environment}-ecs-tasks-sg"
+  })
 }

@@ -30,19 +30,35 @@ Internet → ALB → ECS Service (Fargate) → Flask App Container
 ## Project Structure
 
 ```
-├── .gitignore                 # Git ignore rules for Terraform
-├── README.md                  # This file
-└── envs/
-    └── dev/                   # Development environment
-        ├── .terraform.lock.hcl # Provider version locks
-        ├── main.tf            # Provider and backend configuration
-        ├── variables.tf       # Input variables
-        ├── data.tf           # Data sources
-        ├── ecs.tf            # ECS cluster, service, and task definition
-        ├── alb.tf            # Application Load Balancer configuration
-        ├── ecr.tf            # ECR repository
-        └── sg.tf             # Security groups
+envs/dev/
+├── alb.tf                 # Application Load Balancer configuration
+├── data.tf                # Data sources (VPC, subnets, IAM roles)
+├── ecr.tf                 # Elastic Container Registry
+├── ecs.tf                 # ECS cluster, service, and task definition
+├── main.tf                # Provider and Terraform configuration
+├── outputs.tf             # Output values
+├── sg.tf                  # Security groups
+├── variables.tf           # Variable definitions
+└── terraform.tfvars       # Variable values (environment-specific)
 ```
+
+## Configuration
+
+### terraform.tfvars
+
+The `terraform.tfvars` file contains all environment-specific configuration. Key variables include:
+
+| Variable | Description | Default Value |
+|----------|-------------|---------------|
+| `project_name` | Name of the project | `simhill` |
+| `environment` | Environment name (dev, staging, prod) | `dev` |
+| `aws_region` | AWS region for deployment | `eu-west-2` |
+| `container_image` | Full ECR image URI | `946760796955.dkr.ecr.eu-west-2.amazonaws.com/flask-tp-app:latest` |
+| `ecs_cpu` | CPU units for ECS tasks | `256` |
+| `ecs_memory` | Memory (MB) for ECS tasks | `512` |
+| `ecs_desired_count` | Number of running tasks | `2` |
+| `container_port` | Port the container listens on | `5000` |
+| `alb_port` | Load balancer port | `80` |
 
 ## Quick Start
 
@@ -53,30 +69,21 @@ git clone <repository-url>
 cd tp-tf-assessment
 ```
 
-### 2. Configure Variables
-
-Update the variables in `envs/dev/variables.tf` or create a `terraform.tfvars` file:
-
-```hcl
-project_name = "your-project-name"
-container_image = "your-account-id.dkr.ecr.eu-west-2.amazonaws.com/your-app:latest"
-```
-
-### 3. Initialize Terraform
+### 2. Initialize Terraform
 
 ```bash
 cd envs/dev
 terraform init
 ```
 
-### 4. Plan and Apply
+### 3. Plan and Apply
 
 ```bash
 terraform plan
 terraform apply
 ```
 
-### 5. Access Your Application
+### 4. Access Your Application
 
 After deployment, get the ALB DNS name:
 
@@ -119,7 +126,7 @@ The Flask application is configured with:
 
 ## Deployment Pipeline
 
-### Container Image Workflow
+### Manual Container Image Workflow
 
 1. Build your Flask application Docker image
 2. Tag the image: `docker tag your-app:latest <account-id>.dkr.ecr.eu-west-2.amazonaws.com/flask-tp-app:latest`
@@ -140,6 +147,39 @@ docker tag flask-tp-app:latest <account-id>.dkr.ecr.eu-west-2.amazonaws.com/flas
 # Push
 docker push <account-id>.dkr.ecr.eu-west-2.amazonaws.com/flask-tp-app:latest
 ```
+
+### Automated Container Image Workflow
+
+Please refer to the `adailycanof/tp-gha-assessment` repo in github for the full automated build and push of the image to ECR.
+
+## Outputs
+
+After deployment, useful outputs include:
+
+- `alb_dns_name` - Load balancer DNS name
+- `alb_zone_id` - Load balancer Route53 zone ID
+- `ecr_repository_url` - ECR repository URL
+- `ecs_cluster_name` - ECS cluster name
+- `ecs_service_name` - ECS service name
+- `application_url` - Full application URL
+
+## Security
+
+### Security Groups
+
+- **ALB Security Group**: Allows inbound HTTP (port 80) from anywhere
+- **ECS Tasks Security Group**: Allows inbound traffic on container port (5000) from ALB only
+
+### IAM Roles
+
+- **ECS Task Execution Role**: Allows ECS to pull images from ECR and write logs to CloudWatch
+
+### Health Checks
+
+ALB performs health checks on the root path (`/`) with:
+- Interval: 30 seconds
+- Timeout: 5 seconds
+- Healthy threshold: 2 consecutive successes
 
 ## Troubleshooting
 
@@ -163,10 +203,10 @@ docker push <account-id>.dkr.ecr.eu-west-2.amazonaws.com/flask-tp-app:latest
 
 ```bash
 # Check ECS service status
-aws ecs describe-services --cluster simhill-cluster --services simhill-service
+aws ecs describe-services --cluster <clsuter-name> --services <service-name>
 
 # View ECS service events
-aws ecs describe-services --cluster simhill-cluster --services simhill-service --query 'services[0].events'
+aws ecs describe-services --cluster <clsuter-name> --services <service-name> --query 'services[0].events'
 
 # Check ALB target health
 aws elbv2 describe-target-health --target-group-arn <target-group-arn>
@@ -180,29 +220,28 @@ aws elbv2 describe-target-health --target-group-arn <target-group-arn>
 
 Estimated monthly cost: ~$15-25 USD (varies by usage)
 
+## Cleanup
+
+To destroy all resources:
+
+```bash
+terraform destroy
+```
+
+**Note**: This will permanently delete all infrastructure resources. Ensure you have backups of any important data.
+
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+1. Make changes to the appropriate `.tf` files
+2. Update `terraform.tfvars` if new variables are added
+3. Test changes with `terraform plan`
+4. Update this README if architectural changes are made
 
-## License
+## Tags and Resource Naming
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+All resources are tagged with:
+- `Environment` - The deployment environment
+- `Project` - The project name
+- `ManagedBy` - "terraform"
 
-## Support
-
-For issues and questions:
-1. Check the troubleshooting section
-2. Review AWS documentation
-3. Open an issue in this repository
-
-## Changelog
-
-### v1.0.0
-- Initial release with basic ECS Fargate deployment
-- ALB integration
-- ECR repository setup
-- Security group configuration
+Resource names follow the pattern: `{project_name}-{environment}-{resource_type}`

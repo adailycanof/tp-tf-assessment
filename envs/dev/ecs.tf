@@ -1,15 +1,15 @@
 # ECS Cluster
 resource "aws_ecs_cluster" "main" {
-  name = "${var.project_name}-cluster"
+  name = "${var.project_name}-${var.environment}-cluster"
 
-  tags = {
-    Name = "${var.project_name}-cluster"
-  }
+  tags = merge(var.common_tags, {
+    Name = "${var.project_name}-${var.environment}-cluster"
+  })
 }
 
 # IAM Role for ECS Task Execution
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "${var.project_name}-ecs-task-execution-role"
+  name = "${var.project_name}-${var.environment}-ecs-task-execution-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -23,6 +23,8 @@ resource "aws_iam_role" "ecs_task_execution_role" {
       }
     ]
   })
+
+  tags = var.common_tags
 }
 
 resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
@@ -32,20 +34,20 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
 
 # ECS Task Definition
 resource "aws_ecs_task_definition" "app" {
-  family                   = "${var.project_name}-task"
+  family                   = "${var.project_name}-${var.environment}-task"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = 256
-  memory                   = 512
+  cpu                      = var.ecs_cpu
+  memory                   = var.ecs_memory
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
 
   container_definitions = jsonencode([
     {
-      name  = var.project_name
+      name  = "${var.project_name}-${var.environment}"
       image = var.container_image
       portMappings = [
         {
-          containerPort = 5000
+          containerPort = var.container_port
           protocol      = "tcp"
         }
       ]
@@ -56,24 +58,42 @@ resource "aws_ecs_task_definition" "app" {
         },
         {
           name  = "FLASK_ENV"
-          value = "production"
+          value = var.environment == "prod" ? "production" : var.environment
         }
       ]
       essential = true
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = "/ecs/${var.project_name}-${var.environment}"
+          "awslogs-region"        = var.aws_region
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }
     }
   ])
 
-  tags = {
-    Name = "${var.project_name}-task"
-  }
+  tags = merge(var.common_tags, {
+    Name = "${var.project_name}-${var.environment}-task"
+  })
+}
+
+# CloudWatch Log Group
+resource "aws_cloudwatch_log_group" "app" {
+  name              = "/ecs/${var.project_name}-${var.environment}"
+  retention_in_days = 30
+
+  tags = merge(var.common_tags, {
+    Name = "${var.project_name}-${var.environment}-logs"
+  })
 }
 
 # ECS Service
 resource "aws_ecs_service" "app" {
-  name            = "${var.project_name}-service"
+  name            = "${var.project_name}-${var.environment}-service"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.app.arn
-  desired_count   = 2
+  desired_count   = var.ecs_desired_count
   launch_type     = "FARGATE"
 
   network_configuration {
@@ -84,13 +104,13 @@ resource "aws_ecs_service" "app" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.app.arn
-    container_name   = var.project_name
-    container_port   = 5000
+    container_name   = "${var.project_name}-${var.environment}"
+    container_port   = var.container_port
   }
 
   depends_on = [aws_lb_listener.app]
 
-  tags = {
-    Name = "${var.project_name}-service"
-  }
+  tags = merge(var.common_tags, {
+    Name = "${var.project_name}-${var.environment}-service"
+  })
 }
