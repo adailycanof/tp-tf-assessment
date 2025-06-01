@@ -245,3 +245,12 @@ All resources are tagged with:
 - `ManagedBy` - "terraform"
 
 Resource names follow the pattern: `{project_name}-{environment}-{resource_type}`
+
+## Improvements
+
+- Security Enhancements - Including HTTPS/TLS, WAF, secrets management, and proper VPC setup
+- Infrastructure & Architecture - Multi-AZ deployment, auto-scaling, database integration, and CDN
+- Monitoring & Observability - CloudWatch dashboards, centralized logging, and APM
+- CI/CD & Deployment - Blue/green deployments, infrastructure pipelines, and automated testing
+- Operational Excellence - Backup strategies, compliance frameworks, and better documentation
+- Performance & Scalability - Load testing, container optimization, and database improvements
