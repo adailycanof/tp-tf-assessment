@@ -1,8 +1,8 @@
-# Flask Application Infrastructure on AWS
+# 🚀 Flask Application Infrastructure on AWS
 
 This repository contains Terraform Infrastructure as Code (IaC) for deploying a Flask application on AWS using ECS Fargate, Application Load Balancer, and ECR.
 
-## Architecture Overview
+## 🏗️ Architecture Overview
 
 The infrastructure deploys a containerized Flask application with the following AWS services:
 
@@ -20,7 +20,7 @@ Internet → ALB → ECS Service (Fargate) → Flask App Container
                  ECR Repository
 ```
 
-## Prerequisites
+## ✅ Prerequisites
 
 - [Terraform](https://www.terraform.io/downloads.html) >= 1.0
 - AWS CLI configured with appropriate credentials
@@ -28,7 +28,7 @@ Internet → ALB → ECS Service (Fargate) → Flask App Container
 - Terraform Cloud account (configured for remote state)
 - Access to the "adco" organization workspace "devops-assessment-terraform-dev" in Terraform Cloud
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 ├── README.md
@@ -61,16 +61,16 @@ Internet → ALB → ECS Service (Fargate) → Flask App Container
     └── deployment.md             # Deployment procedures
 ```
 
-## Quick Start
+## ⚡ Quick Start
 
-### 1. Clone the Repository
+### 1️⃣ Clone the Repository
 
 ```bash
 git clone <repository-url>
 cd tp-tf-assessment
 ```
 
-### 2. Configure Environment
+### 2️⃣ Configure Environment
 
 ```bash
 cd environments/dev
@@ -78,20 +78,20 @@ cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars with your specific values
 ```
 
-### 3. Initialize Terraform
+### 3️⃣ Initialize Terraform
 
 ```bash
 terraform init
 ```
 
-### 4. Plan and Apply
+### 4️⃣ Plan and Apply
 
 ```bash
 terraform plan
 terraform apply
 ```
 
-### 5. Access Your Application
+### 5️⃣ Access Your Application
 
 After deployment, get the ALB DNS name:
 
@@ -99,9 +99,9 @@ After deployment, get the ALB DNS name:
 terraform output application_url
 ```
 
-## Configuration
+## ⚙️ Configuration
 
-### Key Variables
+### 🔑 Key Variables
 
 | Variable | Description | Default Value | Required |
 |----------|-------------|---------------|----------|
@@ -115,13 +115,13 @@ terraform output application_url
 | `container_port` | Container application port | `5000` | No |
 | `alb_port` | Load balancer port | `80` | No |
 
-### Environment Variables
+### 🌍 Environment Variables
 
 The Flask application is configured with:
 - `FLASK_APP=hello`
 - `FLASK_ENV=production` (for prod) or environment name
 
-## Module Usage
+## 📦 Module Usage
 
 The infrastructure is organized as a reusable module. Each environment calls the module with environment-specific parameters:
 
@@ -143,18 +143,18 @@ module "flask_app" {
 }
 ```
 
-## Security
+## 🔒 Security
 
-### Security Groups
+### 🛡️ Security Groups
 
 - **ALB Security Group**: Allows inbound traffic on port 80 from anywhere
 - **ECS Tasks Security Group**: Allows inbound traffic on port 5000 from ALB only
 
-### IAM Roles
+### 👤 IAM Roles
 
 - **ECS Task Execution Role**: Minimal permissions for ECS to pull images and write logs
 
-## Monitoring and Health Checks
+## 📊 Monitoring and Health Checks
 
 - **Health Check Path**: `/`
 - **Health Check Interval**: 30 seconds
@@ -162,7 +162,7 @@ module "flask_app" {
 - **Unhealthy Threshold**: 2 consecutive failed checks
 - **CloudWatch Logs**: Centralized logging for ECS tasks
 
-## Adding New Environments
+## ➕ Adding New Environments
 
 To add a new environment (e.g., staging):
 
@@ -172,9 +172,9 @@ To add a new environment (e.g., staging):
 4. Update the Terraform Cloud workspace name in `main.tf`
 5. Run `terraform init` and `terraform apply`
 
-## Deployment Pipeline
+## 🚢 Deployment Pipeline
 
-### Manual Container Image Workflow
+### 🐳 Manual Container Image Workflow
 
 1. Build your Flask application Docker image
 2. Tag the image: `docker tag your-app:latest <account-id>.dkr.ecr.eu-central-1.amazonaws.com/flask-tp-app:latest`
@@ -182,7 +182,7 @@ To add a new environment (e.g., staging):
 4. Update the `container_image` variable in `terraform.tfvars`
 5. Run `terraform apply`
 
-### ECR Commands
+### 📋 ECR Commands
 
 ```bash
 # Get login token
@@ -196,11 +196,11 @@ docker tag flask-tp-app:latest <account-id>.dkr.ecr.eu-central-1.amazonaws.com/f
 docker push <account-id>.dkr.ecr.eu-central-1.amazonaws.com/flask-tp-app:latest
 ```
 
-### Automated Container Image Workflow
+### 🤖 Automated Container Image Workflow
 
 Please refer to the `adailycanof/tp-gha-assessment` repo in GitHub for the full automated build and push of the image to ECR.
 
-## Outputs
+## 📤 Outputs
 
 After deployment, the following outputs are available:
 
@@ -213,9 +213,9 @@ After deployment, the following outputs are available:
 | `ecs_cluster_name` | ECS cluster name |
 | `ecs_service_name` | ECS service name |
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
-### Common Issues
+### ⚠️ Common Issues
 
 1. **ECS Service fails to start**
    - Check ECR image exists and is accessible
@@ -235,7 +235,7 @@ After deployment, the following outputs are available:
    - Verify the module path in `main.tf` is correct
    - Ensure all module files are present
 
-### Debugging Commands
+### 🐛 Debugging Commands
 
 ```bash
 # Check ECS service status
@@ -251,7 +251,7 @@ aws elbv2 describe-target-health --target-group-arn <target-group-arn>
 aws logs get-log-events --log-group-name /ecs/<project>-<env> --log-stream-name <stream-name>
 ```
 
-## Cost Optimization
+## 💰 Cost Optimization
 
 - **ECS Fargate**: 2 tasks × 0.25 vCPU × 0.5 GB RAM
 - **ALB**: Application Load Balancer with minimal traffic
@@ -260,7 +260,7 @@ aws logs get-log-events --log-group-name /ecs/<project>-<env> --log-stream-name 
 
 Estimated monthly cost: ~$15-25 USD (varies by usage)
 
-## Cleanup
+## 🗑️ Cleanup
 
 To destroy all resources:
 
@@ -271,9 +271,9 @@ terraform destroy
 
 **Note**: This will permanently delete all infrastructure resources. Ensure you have backups of any important data.
 
-## Best Practices Implemented
+## ✨ Best Practices Implemented
 
-### Terraform Best Practices
+### 🛠️ Terraform Best Practices
 - **Modular Structure**: Reusable modules for different environments
 - **Variable Validation**: Input validation for all variables
 - **Consistent Naming**: Standardized resource naming using locals
@@ -281,20 +281,20 @@ terraform destroy
 - **State Management**: Remote state using Terraform Cloud
 - **Documentation**: Comprehensive inline and external documentation
 
-### AWS Best Practices
+### ☁️ AWS Best Practices
 - **Security Groups**: Principle of least privilege
 - **IAM Roles**: Minimal required permissions
 - **Tagging Strategy**: Consistent resource tagging
 - **Health Checks**: Robust application health monitoring
 - **Logging**: Centralized logging with CloudWatch
 
-### DevOps Best Practices
+### 🔄 DevOps Best Practices
 - **Environment Separation**: Clear environment boundaries
 - **Configuration Management**: Environment-specific configurations
 - **Version Control**: Proper .gitignore and file organization
 - **Documentation**: Architecture and deployment documentation
 
-## Resource Naming Convention
+## 🏷️ Resource Naming Convention
 
 All resources follow the pattern: `{project_name}-{environment}-{resource_type}`
 
@@ -303,7 +303,7 @@ Examples:
 - ALB: `simhill-dev-alb`
 - Security Group: `simhill-dev-alb-sg`
 
-## Tags and Compliance
+## 🏷️ Tags and Compliance
 
 All resources are tagged with:
 - `Environment` - The deployment environment (dev/staging/prod)
@@ -312,7 +312,7 @@ All resources are tagged with:
 - `Owner` - Team or individual responsible
 - `CostCenter` - For cost allocation
 
-## Future Improvements
+## 🔮 Future Improvements
 
 - Enable HTTPS via ALB and integrate AWS WAF
 - Ensure high availability with multi-AZ setup

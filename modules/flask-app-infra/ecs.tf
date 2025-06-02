@@ -1,4 +1,6 @@
 # ECS Cluster
+
+# Starts the creation of a ECS cluster
 resource "aws_ecs_cluster" "main" {
   name = "${var.project_name}-${var.environment}-cluster"
 
