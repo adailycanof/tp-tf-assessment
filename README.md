@@ -127,7 +127,7 @@ The infrastructure is organized as a reusable module. Each environment calls the
 
 ```hcl
 module "flask_app" {
-  source = "../../modules/flask-app"
+  source = "../../modules/flask-app-infra"
   
   project_name     = "simhill"
   environment      = "dev"
