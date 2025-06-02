@@ -1,4 +1,6 @@
 # Security Groups
+
+# ALB SG
 resource "aws_security_group" "alb" {
   name        = "${var.project_name}-${var.environment}-alb-sg"
   description = "Security group for ALB"
@@ -23,6 +25,7 @@ resource "aws_security_group" "alb" {
   })
 }
 
+# ECS SG
 resource "aws_security_group" "ecs_tasks" {
   name        = "${var.project_name}-${var.environment}-ecs-tasks-sg"
   description = "Security group for ECS tasks"

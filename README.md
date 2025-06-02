@@ -52,8 +52,8 @@ The `terraform.tfvars` file contains all environment-specific configuration. Key
 |----------|-------------|---------------|
 | `project_name` | Name of the project | `simhill` |
 | `environment` | Environment name (dev, staging, prod) | `dev` |
-| `aws_region` | AWS region for deployment | `eu-west-2` |
-| `container_image` | Full ECR image URI | `946760796955.dkr.ecr.eu-west-2.amazonaws.com/flask-tp-app:latest` |
+| `aws_region` | AWS region for deployment | `eu-centra1-1` |
+| `container_image` | Full ECR image URI | `946760796955.dkr.ecr.eu-centra1-1.amazonaws.com/flask-tp-app:latest` |
 | `ecs_cpu` | CPU units for ECS tasks | `256` |
 | `ecs_memory` | Memory (MB) for ECS tasks | `512` |
 | `ecs_desired_count` | Number of running tasks | `2` |
@@ -98,7 +98,7 @@ terraform output alb_dns_name
 | Variable | Description | Type | Default |
 |----------|-------------|------|---------|
 | `project_name` | Name of the project (used for resource naming) | `string` | `"simhill"` |
-| `container_image` | Container image URI from ECR | `string` | `"946760796955.dkr.ecr.eu-west-2.amazonaws.com/flask-tp-app:latest"` |
+| `container_image` | Container image URI from ECR | `string` | `"946760796955.dkr.ecr.eu-centra1-1.amazonaws.com/flask-tp-app:latest"` |
 
 ### Environment Variables
 
@@ -129,8 +129,8 @@ The Flask application is configured with:
 ### Manual Container Image Workflow
 
 1. Build your Flask application Docker image
-2. Tag the image: `docker tag your-app:latest <account-id>.dkr.ecr.eu-west-2.amazonaws.com/flask-tp-app:latest`
-3. Push to ECR: `docker push <account-id>.dkr.ecr.eu-west-2.amazonaws.com/flask-tp-app:latest`
+2. Tag the image: `docker tag your-app:latest <account-id>.dkr.ecr.eu-centra1-1.amazonaws.com/flask-tp-app:latest`
+3. Push to ECR: `docker push <account-id>.dkr.ecr.eu-centra1-1.amazonaws.com/flask-tp-app:latest`
 4. Update the `container_image` variable
 5. Run `terraform apply`
 
@@ -138,14 +138,14 @@ The Flask application is configured with:
 
 ```bash
 # Get login token
-aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin <account-id>.dkr.ecr.eu-west-2.amazonaws.com
+aws ecr get-login-password --region eu-centra1-1 | docker login --username AWS --password-stdin <account-id>.dkr.ecr.eu-centra1-1.amazonaws.com
 
 # Build and tag
 docker build -t flask-tp-app .
-docker tag flask-tp-app:latest <account-id>.dkr.ecr.eu-west-2.amazonaws.com/flask-tp-app:latest
+docker tag flask-tp-app:latest <account-id>.dkr.ecr.eu-centra1-1.amazonaws.com/flask-tp-app:latest
 
 # Push
-docker push <account-id>.dkr.ecr.eu-west-2.amazonaws.com/flask-tp-app:latest
+docker push <account-id>.dkr.ecr.eu-centra1-1.amazonaws.com/flask-tp-app:latest
 ```
 
 ### Automated Container Image Workflow
@@ -173,13 +173,6 @@ After deployment, useful outputs include:
 ### IAM Roles
 
 - **ECS Task Execution Role**: Allows ECS to pull images from ECR and write logs to CloudWatch
-
-### Health Checks
-
-ALB performs health checks on the root path (`/`) with:
-- Interval: 30 seconds
-- Timeout: 5 seconds
-- Healthy threshold: 2 consecutive successes
 
 ## Troubleshooting
 
@@ -254,3 +247,206 @@ Resource names follow the pattern: `{project_name}-{environment}-{resource_type}
 - CI/CD & Deployment - Blue/green deployments, infrastructure pipelines, and automated testing
 - Operational Excellence - Backup strategies, compliance frameworks, and better documentation
 - Performance & Scalability - Load testing, container optimization, and database improvements
+
+## IAM Permissions Needed
+
+```
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "EC2VPCPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeVpcs",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeSecurityGroups",
+        "ec2:CreateSecurityGroup",
+        "ec2:DeleteSecurityGroup",
+        "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:AuthorizeSecurityGroupEgress",
+        "ec2:RevokeSecurityGroupIngress",
+        "ec2:RevokeSecurityGroupEgress",
+        "ec2:CreateTags",
+        "ec2:DeleteTags",
+        "ec2:DescribeTags"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "eu-central-1"
+        }
+      }
+    },
+    {
+      "Sid": "ECRAuthenticationGlobal",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetAuthorizationToken"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ECSPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "ecs:CreateCluster",
+        "ecs:DeleteCluster",
+        "ecs:DescribeClusters",
+        "ecs:RegisterTaskDefinition",
+        "ecs:DeregisterTaskDefinition",
+        "ecs:DescribeTaskDefinition",
+        "ecs:ListTaskDefinitions",
+        "ecs:CreateService",
+        "ecs:UpdateService",
+        "ecs:DeleteService",
+        "ecs:DescribeServices",
+        "ecs:ListServices",
+        "ecs:ListTagsForResource",
+        "ecs:TagResource",
+        "ecs:UntagResource"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "eu-central-1"
+        }
+      }
+    },
+    {
+      "Sid": "ECRPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:CreateRepository",
+        "ecr:DeleteRepository",
+        "ecr:DescribeRepositories",
+        "ecr:GetRepositoryPolicy",
+        "ecr:SetRepositoryPolicy",
+        "ecr:DeleteRepositoryPolicy",
+        "ecr:PutImageScanningConfiguration",
+        "ecr:GetImageScanningConfiguration",
+        "ecr:ListTagsForResource",
+        "ecr:TagResource",
+        "ecr:UntagResource",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage",
+        "ecr:GetAuthorizationToken",
+        "ecr:InitiateLayerUpload",
+        "ecr:UploadLayerPart",
+        "ecr:CompleteLayerUpload",
+        "ecr:PutImage",
+        "ecr:BatchDeleteImage",
+        "ecr:DescribeImages",
+        "ecr:ListImages"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "eu-central-1"
+        }
+      }
+    },
+    {
+      "Sid": "LoadBalancerPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "elasticloadbalancing:CreateLoadBalancer",
+        "elasticloadbalancing:DeleteLoadBalancer",
+        "elasticloadbalancing:DescribeLoadBalancers",
+        "elasticloadbalancing:ModifyLoadBalancerAttributes",
+        "elasticloadbalancing:DescribeLoadBalancerAttributes",
+        "elasticloadbalancing:CreateTargetGroup",
+        "elasticloadbalancing:DeleteTargetGroup",
+        "elasticloadbalancing:DescribeTargetGroups",
+        "elasticloadbalancing:ModifyTargetGroup",
+        "elasticloadbalancing:ModifyTargetGroupAttributes",
+        "elasticloadbalancing:DescribeTargetGroupAttributes",
+        "elasticloadbalancing:DescribeTargetHealth",
+        "elasticloadbalancing:CreateListener",
+        "elasticloadbalancing:DeleteListener",
+        "elasticloadbalancing:DescribeListeners",
+        "elasticloadbalancing:ModifyListener",
+        "elasticloadbalancing:CreateRule",
+        "elasticloadbalancing:DeleteRule",
+        "elasticloadbalancing:DescribeRules",
+        "elasticloadbalancing:ModifyRule",
+        "elasticloadbalancing:AddTags",
+        "elasticloadbalancing:RemoveTags",
+        "elasticloadbalancing:DescribeTags"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "eu-central-1"
+        }
+      }
+    },
+    {
+      "Sid": "IAMPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:GetRole",
+        "iam:UpdateRole",
+        "iam:AttachRolePolicy",
+        "iam:DetachRolePolicy",
+        "iam:ListRolePolicies",
+        "iam:ListAttachedRolePolicies",
+        "iam:PassRole",
+        "iam:TagRole",
+        "iam:UntagRole",
+        "iam:ListRoleTags",
+        "iam:CreateInstanceProfile",
+        "iam:DeleteInstanceProfile",
+        "iam:GetInstanceProfile",
+        "iam:AddRoleToInstanceProfile",
+        "iam:RemoveRoleFromInstanceProfile"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudWatchLogsPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:DeleteLogGroup",
+        "logs:DescribeLogGroups",
+        "logs:PutRetentionPolicy",
+        "logs:DeleteRetentionPolicy",
+        "logs:TagLogGroup",
+        "logs:UntagLogGroup",
+        "logs:ListTagsLogGroup",
+        "logs:CreateLogStream",
+        "logs:DeleteLogStream",
+        "logs:DescribeLogStreams"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "eu-central-1"
+        }
+      }
+    },
+    {
+      "Sid": "ApplicationAutoScalingPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "application-autoscaling:RegisterScalableTarget",
+        "application-autoscaling:DeregisterScalableTarget",
+        "application-autoscaling:DescribeScalableTargets",
+        "application-autoscaling:PutScalingPolicy",
+        "application-autoscaling:DeleteScalingPolicy",
+        "application-autoscaling:DescribeScalingPolicies"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "eu-central-1"
+        }
+      }
+    }
+  ]
+}
+```
