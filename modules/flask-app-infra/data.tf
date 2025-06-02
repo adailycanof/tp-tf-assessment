@@ -1,3 +1,5 @@
+# Data calls
+
 # Data source to get the VPC ID
 data "aws_vpc" "default_vpc" {
 }

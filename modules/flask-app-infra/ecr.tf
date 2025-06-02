@@ -1,4 +1,6 @@
 # ECR Repository
+
+# Makes new ECR repo
 resource "aws_ecr_repository" "app" {
   name                 = "flask-tp-app"
   image_tag_mutability = "MUTABLE"
