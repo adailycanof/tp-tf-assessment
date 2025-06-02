@@ -294,14 +294,6 @@ terraform destroy
 - **Version Control**: Proper .gitignore and file organization
 - **Documentation**: Architecture and deployment documentation
 
-## Contributing
-
-1. Make changes to the appropriate module files in `modules/flask-app/`
-2. Test changes in the dev environment first
-3. Update environment-specific `terraform.tfvars` if new variables are added
-4. Update documentation if architectural changes are made
-5. Test with `terraform plan` before applying
-
 ## Resource Naming Convention
 
 All resources follow the pattern: `{project_name}-{environment}-{resource_type}`
