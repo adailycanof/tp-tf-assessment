@@ -224,4 +224,99 @@ After deployment, the following outputs are available:
 
 2. **ALB health checks failing**
    - Ensure your Flask app responds on port 5000
-   -
+   - Verify the health check path returns HTTP 200
+   - Check container port mapping
+
+3. **Terraform state issues**
+   - Ensure Terraform Cloud workspace is properly configured
+   - Check AWS credentials and permissions
+
+4. **Module not found errors**
+   - Verify the module path in `main.tf` is correct
+   - Ensure all module files are present
+
+### Debugging Commands
+
+```bash
+# Check ECS service status
+aws ecs describe-services --cluster <cluster-name> --services <service-name>
+
+# View ECS service events
+aws ecs describe-services --cluster <cluster-name> --services <service-name> --query 'services[0].events'
+
+# Check ALB target health
+aws elbv2 describe-target-health --target-group-arn <target-group-arn>
+
+# View CloudWatch logs
+aws logs get-log-events --log-group-name /ecs/<project>-<env> --log-stream-name <stream-name>
+```
+
+## Cost Optimization
+
+- **ECS Fargate**: 2 tasks × 0.25 vCPU × 0.5 GB RAM
+- **ALB**: Application Load Balancer with minimal traffic
+- **ECR**: Pay per storage used
+- **CloudWatch**: Pay per log ingestion and storage
+
+Estimated monthly cost: ~$15-25 USD (varies by usage)
+
+## Cleanup
+
+To destroy all resources:
+
+```bash
+cd environments/dev
+terraform destroy
+```
+
+**Note**: This will permanently delete all infrastructure resources. Ensure you have backups of any important data.
+
+## Best Practices Implemented
+
+### Terraform Best Practices
+- **Modular Structure**: Reusable modules for different environments
+- **Variable Validation**: Input validation for all variables
+- **Consistent Naming**: Standardized resource naming using locals
+- **Provider Versioning**: Pinned provider versions for consistency
+- **State Management**: Remote state using Terraform Cloud
+- **Documentation**: Comprehensive inline and external documentation
+
+### AWS Best Practices
+- **Security Groups**: Principle of least privilege
+- **IAM Roles**: Minimal required permissions
+- **Tagging Strategy**: Consistent resource tagging
+- **Health Checks**: Robust application health monitoring
+- **Logging**: Centralized logging with CloudWatch
+
+### DevOps Best Practices
+- **Environment Separation**: Clear environment boundaries
+- **Configuration Management**: Environment-specific configurations
+- **Version Control**: Proper .gitignore and file organization
+- **Documentation**: Architecture and deployment documentation
+
+## Resource Naming Convention
+
+All resources follow the pattern: `{project_name}-{environment}-{resource_type}`
+
+Examples:
+- ECS Cluster: `simhill-dev-cluster`
+- ALB: `simhill-dev-alb`
+- Security Group: `simhill-dev-alb-sg`
+
+## Tags and Compliance
+
+All resources are tagged with:
+- `Environment` - The deployment environment (dev/staging/prod)
+- `Project` - The project name
+- `ManagedBy` - "terraform"
+- `Owner` - Team or individual responsible
+- `CostCenter` - For cost allocation
+
+## Future Improvements
+
+- Enable HTTPS via ALB and integrate AWS WAF
+- Ensure high availability with multi-AZ setup
+- Set up CloudWatch dashboards and custom alarms
+- Use Terratest for infrastructure testing
+- Automate security scanning in the pipeline
+- Identify and apply cost optimization opportunities
