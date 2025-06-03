@@ -21,9 +21,9 @@ provider "aws" {
 }
 
 module "flask_app" {
-  #source = "tp-tf-assessment/modules/flask-app-infra"
+  source = "/mnt/d/tp-tf-assessment/modules/flask-app-infra"
   #source = "../../modules/flask-app-infra"
-  source = "../../modules/flask-app-infra"
+  #source = "../../modules/flask-app-infra"
   
   project_name        = var.project_name
   environment         = var.environment
